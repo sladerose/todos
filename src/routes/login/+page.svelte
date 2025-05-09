@@ -10,12 +10,19 @@
 
 	// Function to handle login using Supabase's email/password auth
 	async function login() {
-		const { error: authError } = await supabase.auth.signInWithPassword({ email, password });
+		// Call Supabase sign-in
+		const { error: authError, data: sessionData } = await supabase.auth.signInWithPassword({
+			email,
+			password
+		});
 
-		// Show the error if authentication fails
+		// Show error message if authentication fails
 		if (authError) {
 			error = authError.message;
 		} else {
+			// Log session data (optional)
+			console.log('Session after login:', sessionData);
+
 			// Redirect to the home page on success
 			window.location.href = '/';
 		}
