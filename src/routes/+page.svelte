@@ -1,14 +1,19 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+
+	// Import the todos store and functions for CRUD operations
 	import { todos, fetchTodos, addTodo, toggleTodo, deleteTodo } from '$lib/stores/todos';
 	import type { Todo } from '$lib/stores/todos';
 
+	// Local input value for the new to-do
 	let newTodo = '';
 
+	// Fetch the current user's todos when the component mounts
 	onMount(() => {
 		fetchTodos();
 	});
 
+	// Add a new todo and clear the input field
 	async function handleAdd() {
 		if (newTodo.trim()) {
 			await addTodo(newTodo.trim());
@@ -17,8 +22,10 @@
 	}
 </script>
 
+<!-- Page title -->
 <h1>📝 To-Do List</h1>
 
+<!-- New to-do input and add button -->
 <div>
 	<input
 		type="text"
@@ -29,22 +36,29 @@
 	<button on:click={handleAdd}>Add</button>
 </div>
 
+<!-- List of to-dos -->
 <ul>
 	{#each $todos as todo (todo.id)}
 		<li>
+			<!-- Checkbox to toggle completion -->
 			<input
 				type="checkbox"
 				checked={todo.is_complete}
 				on:change={() => toggleTodo(todo.id, todo.is_complete)}
 			/>
+
+			<!-- Task content, styled with strikethrough if complete -->
 			<span style:text-decoration={todo.is_complete ? 'line-through' : 'none'}>
 				{todo.content}
 			</span>
+
+			<!-- Delete button -->
 			<button on:click={() => deleteTodo(todo.id)}>🗑️</button>
 		</li>
 	{/each}
 </ul>
 
+<!-- Basic mobile-friendly styles -->
 <style>
 	h1 {
 		font-size: 1.75rem;
