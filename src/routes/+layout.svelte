@@ -3,44 +3,46 @@
 	import type { Session } from '@supabase/supabase-js';
 	import { supabase } from '$lib/supabaseClient';
 
-	// Session from +layout.ts (optional, may be null on first load)
+	// Session passed in from +layout.ts (optional)
 	export let data: { session: Session | null };
 
-	// Watch session changes and do route-based redirects
-	onMount(async () => {
-		// Get current session from browser (localStorage)
-		const {
-			data: { session }
-		} = await supabase.auth.getSession();
+	// Client-side redirect logic to prevent login loop
+	onMount(() => {
+		let hasRedirected = false;
 
-		const path = window.location.pathname;
+		// Check current session from client (localStorage)
+		supabase.auth.getSession().then(({ data: { session } }) => {
+			const path = window.location.pathname;
 
-		// If user is not logged in and not on /login or /signup, redirect
-		if (!session && path !== '/login' && path !== '/signup') {
-			window.location.href = '/login';
-		}
+			if (!hasRedirected) {
+				if (!session && path !== '/login' && path !== '/signup') {
+					hasRedirected = true;
+					window.location.href = '/login';
+				}
+				if (session && (path === '/login' || path === '/signup')) {
+					hasRedirected = true;
+					window.location.href = '/';
+				}
+			}
+		});
 
-		// If already logged in and on login/signup, redirect to home
-		if (session && (path === '/login' || path === '/signup')) {
-			window.location.href = '/';
-		}
-
-		// Listen for auth changes (e.g., logout)
-		supabase.auth.onAuthStateChange((_event, session) => {
-			if (!session) {
+		// Handle logout from anywhere
+		supabase.auth.onAuthStateChange((_event: string, session: Session | null) => {
+			if (!session && !hasRedirected) {
+				hasRedirected = true;
 				window.location.href = '/login';
 			}
 		});
 	});
 
-	// Logout function: ends session and redirects
+	// Sign the user out
 	async function logout() {
 		await supabase.auth.signOut();
 		window.location.href = '/login';
 	}
 </script>
 
-<!-- Navigation: shows logout if logged in, login/signup if not -->
+<!-- Navigation -->
 <nav>
 	{#if data.session}
 		<button on:click={logout}>Logout</button>
@@ -49,5 +51,5 @@
 	{/if}
 </nav>
 
-<!-- Render current page -->
+<!-- Page content -->
 <slot />
