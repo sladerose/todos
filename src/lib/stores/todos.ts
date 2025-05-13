@@ -8,6 +8,9 @@ export type Todo = {
     content: string;
     is_complete: boolean;
     inserted_at: string;
+    priority: string;
+    due_date: string | null;
+    category: string;
 };
 
 // Create a writable store to hold the user's to-do list
@@ -30,7 +33,12 @@ export async function fetchTodos() {
 }
 
 // Add a new todo item for the current user
-export async function addTodo(content: string) {
+export async function addTodo(
+    content: string,
+    priority: string,
+    due_date: string | null,
+    category: string
+) {
     const { data: userSession } = await supabase.auth.getSession();
     const user = userSession.session?.user;
 
@@ -40,9 +48,9 @@ export async function addTodo(content: string) {
         return;
     }
 
-    // Insert the new todo with the user's ID
+    // Insert the new todo with the user's ID and priority
     const { error } = await supabase.from('todos').insert([
-        { content, user_id: user.id }
+        { content, priority, due_date, category, user_id: user.id }
     ]);
 
     if (error) {
